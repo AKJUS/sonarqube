@@ -350,9 +350,9 @@ subprojects {
       dependency 'org.sonarsource.xml:sonar-xml-plugin:2.14.2.7437'
       dependency 'org.sonarsource.iac:sonar-iac-plugin:2.2.0.18377'
       dependency 'com.sonarsource.iac:sonar-iac-enterprise-plugin:2.2.0.18377'
-      dependency 'org.sonarsource.text:sonar-text-plugin:2.34.0.9939'
-      dependency 'com.sonarsource.text:sonar-text-developer-plugin:2.34.0.9939'
-      dependency 'com.sonarsource.text:sonar-text-enterprise-plugin:2.34.0.9939'
+      dependency 'org.sonarsource.text:sonar-text-plugin:2.35.0.10074'
+      dependency 'com.sonarsource.text:sonar-text-developer-plugin:2.35.0.10074'
+      dependency 'com.sonarsource.text:sonar-text-enterprise-plugin:2.35.0.10074'
       dependency 'com.sonarsource.jcl:sonar-jcl-plugin:1.4.2.2894'
       dependency 'com.sonarsource.architecture:sonar-architecture-plugin:2.11.1.7489'
       dependency 'com.sonarsource.architecture:sonar-architecture-java-frontend-plugin:2.11.1.7489'
@@ -410,7 +410,7 @@ subprojects {
         entry 'hazelcast'
       }
       // Documentation must be updated if mssql-jdbc is updated: https://github.com/SonarSource/sonarqube/commit/03e4773ebf6cba854cdcf57a600095f65f4f53e7
-      dependency('com.microsoft.sqlserver:mssql-jdbc:13.2.1.jre11') {
+      dependency('com.microsoft.sqlserver:mssql-jdbc:13.2.0.jre11') {
         exclude 'com.fasterxml.jackson.core:jackson-databind'
       }
       dependency 'com.microsoft.azure:msal4j:1.23.1'
