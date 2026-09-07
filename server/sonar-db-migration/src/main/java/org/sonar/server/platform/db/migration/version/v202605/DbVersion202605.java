@@ -95,6 +95,7 @@ public class DbVersion202605 implements DbVersion {
       .add(2026_05_064, "Create 'a3s_purge_tasks' table", CreateA3SPurgeTasksTable.class)
       .add(2026_05_065, "Create table 'arch_org_sdks'", CreateArchOrgSdksTable.class)
       .add(2026_05_066, "Add 'origin' column to 'arch_proj_relations'", AddOriginColumnToArchProjectRelationshipsTable.class)
-      .add(2026_05_067, "Create table 'arch_boundaries'", CreateArchBoundariesTable.class);
+      .add(2026_05_067, "Create table 'arch_boundaries'", CreateArchBoundariesTable.class)
+      .add(2026_05_068, "Remove default value on 'devops_perms_mapping.devops_platform'", RemoveDevopsPermsMappingDevopsPlatformDefaultValue.class);
   }
 }
