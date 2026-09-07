@@ -21,7 +21,9 @@ package org.sonar.core.config;
 
 import java.util.List;
 import org.junit.Test;
+import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
+import org.sonar.api.config.PropertyDefinition.ConfigScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +42,20 @@ public class CorePropertyDefinitionsTest {
     assertThat(defs.stream()
       .filter(def -> def.key().equals(ScannerProperties.BRANCH_NAME))
       .findFirst()).isPresent();
+  }
+
+  @Test
+  public void all_includes_build_system_auto_configuration_property() {
+    PropertyDefinition definition = CorePropertyDefinitions.all().stream()
+      .filter(def -> def.key().equals(ScannerProperties.ENABLE_AUTO_CONFIGURATION))
+      .findFirst()
+      .orElseThrow();
+
+    assertThat(definition.type()).isEqualTo(PropertyType.BOOLEAN);
+    assertThat(definition.defaultValue()).isEqualTo("false");
+    assertThat(definition.global()).isTrue();
+    assertThat(definition.configScopes()).containsExactly(ConfigScope.PROJECT);
+    assertThat(definition.hidden()).isFalse();
   }
 
   @Test
