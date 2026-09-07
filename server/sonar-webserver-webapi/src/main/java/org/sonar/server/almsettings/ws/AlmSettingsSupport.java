@@ -21,8 +21,12 @@ package org.sonar.server.almsettings.ws;
 
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import okhttp3.HttpUrl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.server.ServerSide;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
@@ -49,7 +53,10 @@ import static org.sonar.db.permission.ProjectPermission.ADMIN;
 @ServerSide
 public class AlmSettingsSupport {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AlmSettingsSupport.class);
+
   private static final Pattern WORKSPACE_ID_PATTERN = Pattern.compile("^[a-z0-9\\-_]+$");
+  private static final Pattern AZURE_NAME_INVALID_CHARS = Pattern.compile("[\\\\/:<>|?*]");
 
   private final DbClient dbClient;
   private final UserSession userSession;
@@ -117,6 +124,26 @@ public class AlmSettingsSupport {
         "Workspace ID '%s' has an incorrect format. Should only contain lowercase letters, numbers, dashes, and underscores.",
         workspaceId
       ));
+    }
+  }
+
+  public void validateUrl(@Nullable String url) {
+    if (url == null || HttpUrl.parse(url) == null) {
+      LOG.warn("Rejected an invalid DevOps Platform URL");
+      throw BadRequestException.create(format("Invalid URL: '%s'.", url));
+    }
+  }
+
+  public void validateAzureName(String fieldName, String value) {
+    Matcher matcher = AZURE_NAME_INVALID_CHARS.matcher(value);
+    if (matcher.find()) {
+      String invalidChar = matcher.group();
+      if (LOG.isWarnEnabled()) {
+        LOG.warn("Rejected Azure DevOps name for field '{}': contains invalid character '{}'", fieldName, invalidChar);
+      }
+      throw BadRequestException.create(format(
+        "'%s' contains the invalid character '%s'. Azure DevOps names must not contain any of: \\ / : < > | ? *",
+        fieldName, invalidChar));
     }
   }
 

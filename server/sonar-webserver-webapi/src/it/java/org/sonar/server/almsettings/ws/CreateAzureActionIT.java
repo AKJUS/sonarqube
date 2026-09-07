@@ -105,6 +105,23 @@ public class CreateAzureActionIT {
   }
 
   @Test
+  public void fail_when_url_is_invalid() {
+    UserDto user = db.users().insertUser();
+    userSession.logIn(user).setSystemAdministrator();
+
+    TestRequest request = ws.newRequest()
+      .setParam("key", "Azure Server - Dev Team")
+      .setParam("personalAccessToken", "98765432100")
+      .setParam("url", "not a url");
+
+    assertThatThrownBy(request::execute)
+      .isInstanceOf(BadRequestException.class)
+      .hasMessage("Invalid URL: 'not a url'.");
+
+    assertThat(db.getDbClient().almSettingDao().selectAll(db.getSession())).isEmpty();
+  }
+
+  @Test
   public void fail_when_key_is_already_used() {
     when(multipleAlmFeature.isAvailable()).thenReturn(true);
     UserDto user = db.users().insertUser();

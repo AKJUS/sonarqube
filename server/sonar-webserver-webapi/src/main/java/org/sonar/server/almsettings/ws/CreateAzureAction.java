@@ -59,7 +59,9 @@ public class CreateAzureAction implements AlmSettingsWsAction {
         "Requires the 'Administer System' permission")
       .setPost(true)
       .setSince("8.1")
-      .setChangelog(new Change("8.6", "Parameter 'URL' was added"))
+      .setChangelog(
+        new Change("8.6", "Parameter 'URL' was added"),
+        new Change("2026.5", "Parameter 'url' is now rejected with a 400 response when it is not a valid absolute HTTP(S) URL"))
       .setHandler(this);
 
     action.createParam(PARAM_KEY)
@@ -73,7 +75,7 @@ public class CreateAzureAction implements AlmSettingsWsAction {
     action.createParam(PARAM_URL)
       .setRequired(true)
       .setMaximumLength(2000)
-      .setDescription("Azure API URL");
+      .setDescription("Azure API URL. Must be a valid absolute HTTP(S) URL, e.g. https://dev.azure.com/myorg");
   }
 
   @Override
@@ -94,6 +96,7 @@ public class CreateAzureAction implements AlmSettingsWsAction {
     try (DbSession dbSession = dbClient.openSession(false)) {
       almSettingsSupport.checkAlmMultipleFeatureEnabled(dbSession, AZURE_DEVOPS);
       almSettingsSupport.checkAlmSettingDoesNotAlreadyExist(dbSession, key);
+      almSettingsSupport.validateUrl(url);
     }
 
     // Network call kept outside the JVM lock so the critical section stays CPU-only.
