@@ -593,6 +593,9 @@ class PurgeCommands {
     profiler.start("deleteArchitectureProjectData (arch_boundary_descriptors)");
     purgeMapper.deleteArchBoundaryDescriptorsByProjectUuid(projectUuid);
     profiler.stop();
+    profiler.start("deleteArchitectureProjectData (arch_boundaries)");
+    purgeMapper.deleteArchBoundariesByProjectUuid(projectUuid);
+    profiler.stop();
     profiler.start("deleteArchitectureProjectData (arch_proj_relations)");
     purgeMapper.deleteArchProjRelationsByProjectUuid(projectUuid);
     profiler.stop();
@@ -600,6 +603,11 @@ class PurgeCommands {
     // relationships of other projects that target it.
     profiler.start("deleteArchitectureProjectData (arch_proj_relations targeting this project's org component)");
     purgeMapper.deleteArchProjRelationsByTargetProjectUuid(projectUuid);
+    profiler.stop();
+    // Same reason as above: must run before deleting arch_proj_org_compo. Org SDKs belong to the organization,
+    // not the project, so they are not deleted, only their stale reference to this project's org component is cleared.
+    profiler.start("deleteArchitectureProjectData (arch_org_sdks target component id)");
+    purgeMapper.clearArchOrgSdksTargetComponentIdByProjectUuid(projectUuid);
     profiler.stop();
     profiler.start("deleteArchitectureProjectData (arch_proj_org_compo)");
     purgeMapper.deleteArchProjOrgCompoByProjectUuid(projectUuid);

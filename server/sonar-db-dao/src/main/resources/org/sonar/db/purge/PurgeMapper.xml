@@ -803,6 +803,9 @@
   <delete id="deleteArchBoundaryDescriptorsByProjectUuid">
     delete from arch_boundary_descriptors where project_id = #{projectUuid,jdbcType=VARCHAR}
   </delete>
+  <delete id="deleteArchBoundariesByProjectUuid">
+    delete from arch_boundaries where project_id = #{projectUuid,jdbcType=VARCHAR}
+  </delete>
   <delete id="deleteArchProjRelationsByProjectUuid">
     delete from arch_proj_relations
     <where>
@@ -813,6 +816,10 @@
     delete from arch_proj_relations where target_component_id in
       (select org_component_uuid from arch_proj_org_compo where project_id = #{projectUuid,jdbcType=VARCHAR})
   </delete>
+  <update id="clearArchOrgSdksTargetComponentIdByProjectUuid">
+    update arch_org_sdks set target_component_id = null where target_component_id in
+      (select org_component_uuid from arch_proj_org_compo where project_id = #{projectUuid,jdbcType=VARCHAR})
+  </update>
   <delete id="deleteArchProjOrgCompoByProjectUuid">
     delete from arch_proj_org_compo where project_id = #{projectUuid,jdbcType=VARCHAR}
   </delete>

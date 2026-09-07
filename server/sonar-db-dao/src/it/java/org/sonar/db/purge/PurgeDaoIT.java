@@ -801,6 +801,13 @@ otherApp.getProjectDto().getUuid());
     insertArchProjectRelation(keptId, deletedOrgComponent);
     // unrelated relationship that must survive
     String survivingRelation = insertArchProjectRelation(keptId, keptOrgComponent);
+    // an SDK targeting the deleted project's org component: it belongs to the organization, not the project, so it
+    // must survive the project deletion, but its now-stale target must be cleared
+    String deletedTargetSdk = insertArchOrgSdk("org", deletedOrgComponent);
+    // one targeting the surviving project's component, and one targeting a placeholder — the latter belongs to
+    // no project at all and must be untouched by any project deletion
+    String survivingSdk = insertArchOrgSdk("org", keptOrgComponent);
+    String placeholderSdk = insertArchOrgSdk("org", Uuids.create());
     dbSession.commit();
 
     underTest.deleteProject(dbSession, deletedId, ComponentQualifiers.PROJECT, toDelete.getProjectDto().getName(),
@@ -811,10 +818,15 @@ otherApp.getProjectDto().getUuid());
     assertThat(db.countSql("select count(*) from arch_proj_org_compo where project_id = '" + deletedId + "'")).isZero();
     assertThat(db.countSql("select count(*) from arch_proj_relations where project_id = '" + deletedId + "'")).isZero();
     assertThat(db.countSql("select count(*) from arch_proj_relations where target_component_id = '" + deletedOrgComponent + "'")).isZero();
+    assertThat(db.countSql("select count(*) from arch_org_sdks where target_component_id = '" + deletedOrgComponent + "'")).isZero();
     // data belonging to the other project is untouched
     assertThat(db.countRowsOfTable("arch_boundary_descriptors")).isOne();
     assertThat(db.countRowsOfTable("arch_proj_org_compo")).isOne();
     assertThat(uuidsIn("arch_proj_relations")).containsOnly(survivingRelation);
+    // no SDK is deleted: they belong to the organization, not the project. Only the stale target is cleared.
+    assertThat(uuidsIn("arch_org_sdks")).containsOnly(deletedTargetSdk, survivingSdk, placeholderSdk);
+    assertThat(db.countSql("select count(*) from arch_org_sdks where uuid = '" + deletedTargetSdk + "' and target_component_id is null")).isOne();
+    assertThat(db.countSql("select count(*) from arch_org_sdks where uuid = '" + survivingSdk + "' and target_component_id = '" + keptOrgComponent + "'")).isOne();
   }
 
   private void insertArchBoundaryDescriptor(String projectId) {
@@ -846,6 +858,20 @@ otherApp.getProjectDto().getUuid());
       "boundary_key", "boundary",
       "target_component_id", targetComponentId,
       "target_entry_point_key", "default");
+    return uuid;
+  }
+
+  private String insertArchOrgSdk(String organizationId, String targetComponentId) {
+    String uuid = Uuids.create();
+    // sdk_key is unique per organization, so it has to vary per SDK.
+    db.executeInsert("arch_org_sdks",
+      "organization_id", organizationId,
+      "uuid", uuid,
+      "name", "SDK " + uuid,
+      "target_component_id", targetComponentId,
+      "sdk_key", "key-" + uuid,
+      "boundary_descriptors", "[]",
+      "created_at", 1_000L);
     return uuid;
   }
 

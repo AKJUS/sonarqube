@@ -234,9 +234,13 @@ public interface PurgeMapper {
 
   void deleteArchBoundaryDescriptorsByProjectUuid(@Param("projectUuid") String projectUuid);
 
+  void deleteArchBoundariesByProjectUuid(@Param("projectUuid") String projectUuid);
+
   void deleteArchProjRelationsByProjectUuid(@Param("projectUuid") String projectUuid);
 
   void deleteArchProjRelationsByTargetProjectUuid(@Param("projectUuid") String projectUuid);
+
+  void clearArchOrgSdksTargetComponentIdByProjectUuid(@Param("projectUuid") String projectUuid);
 
   void deleteArchProjOrgCompoByProjectUuid(@Param("projectUuid") String projectUuid);
 
