@@ -356,16 +356,16 @@ subprojects {
       dependency 'com.sonarsource.plsql:sonar-plsql-plugin:3.24.0.9611'
       dependency 'com.sonarsource.plugins.vb:sonar-vb-plugin:2.19.0.7510'
       dependency 'com.sonarsource.rpg:sonar-rpg-plugin:3.18.0.8642'
-      dependency "com.sonarsource.security:sonar-cve-reachability-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-context-collector-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-csharp-frontend-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-go-frontend-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-java-frontend-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-kotlin-frontend-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-php-frontend-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-python-frontend-plugin:$sonarSecurityVersion"
-      dependency "com.sonarsource.security:sonar-security-vbnet-frontend-plugin:$sonarSecurityVersion"
+      dependency 'com.sonarsource.security:sonar-cve-reachability-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-context-collector-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-csharp-frontend-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-go-frontend-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-java-frontend-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-kotlin-frontend-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-php-frontend-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-python-frontend-plugin:12.1.0.48902'
+      dependency 'com.sonarsource.security:sonar-security-vbnet-frontend-plugin:12.1.0.48902'
       dependency 'org.sonarsource.slang:sonar-ruby-plugin:1.25.0.2597'
       dependency 'org.sonarsource.slang:sonar-scala-plugin:1.24.0.2554'
       dependency 'com.sonarsource.swift:sonar-swift-plugin:5.8.0.13396'
