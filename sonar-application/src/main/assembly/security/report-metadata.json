@@ -19,7 +19,6 @@
     "org.sonarsource.kotlin:sonar-kotlin-plugin",
     "org.sonarsource.orchestrator:sonar-orchestrator-junit4",
     "org.sonarsource.php:sonar-php-plugin",
-    "org.sonarsource.plugins.cayc:sonar-cayc-plugin",
     "org.sonarsource.python:sonar-python-plugin",
     "org.sonarsource.slang:sonar-ruby-plugin",
     "org.sonarsource.slang:sonar-scala-plugin",
