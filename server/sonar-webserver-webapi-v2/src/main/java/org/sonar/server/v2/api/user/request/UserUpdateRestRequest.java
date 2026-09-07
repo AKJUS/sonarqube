@@ -36,6 +36,7 @@ public class UserUpdateRestRequest {
   private UpdateField<String> externalProvider = UpdateField.undefined();
   private UpdateField<String> externalLogin = UpdateField.undefined();
   private UpdateField<String> externalId = UpdateField.undefined();
+  private UpdateField<Boolean> local = UpdateField.undefined();
 
   @Size(min = 2, max = 100)
   @Schema(description = "User login", implementation = String.class)
@@ -80,7 +81,10 @@ public class UserUpdateRestRequest {
   @Schema(implementation = String.class, description = """
     New identity provider. Only providers configured in your platform are supported. This could be: github, gitlab, bitbucket, saml, LDAP, LDAP_{serverKey}
     (according to your server configuration file).
-    Warning: when this is updated, the user will only be able to authenticate using the new identity provider. Also, it is not possible to remove the identity provider of a user.
+    Warning: when this is updated, the user will only be able to authenticate using the new identity provider. The account is turned back into a local one
+    only when 'externalProvider', 'externalLogin' and 'externalId' are all null or absent from the request; the resulting local account has no password
+    (it was cleared when the account was originally bound to an external identity) and an administrator must set one before it can authenticate locally
+    again. Binding a local account to an external identity provider requires this field to be explicitly set together with 'externalLogin' and/or 'externalId'.
     """)
   public UpdateField<String> getExternalProvider() {
     return externalProvider;
@@ -108,5 +112,17 @@ public class UserUpdateRestRequest {
 
   public void setExternalId(@Nullable String externalId) {
     this.externalId = UpdateField.withValue(externalId);
+  }
+
+  @Schema(implementation = Boolean.class, description = """
+    Expected local status of the user once this update is applied. Provided as a safety check: if the resulting local status of the
+    user does not match this value, the request is rejected instead of applied.
+    """)
+  public UpdateField<Boolean> getLocal() {
+    return local;
+  }
+
+  public void setLocal(@Nullable Boolean local) {
+    this.local = UpdateField.withValue(local);
   }
 }

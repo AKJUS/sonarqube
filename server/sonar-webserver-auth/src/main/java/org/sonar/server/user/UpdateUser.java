@@ -33,6 +33,7 @@ public class UpdateUser {
   private String externalIdentityProvider = null;
   private String externalIdentityProviderId = null;
   private String externalIdentityProviderLogin = null;
+  private Boolean local = null;
   private boolean loginChanged = false;
   private boolean nameChanged = false;
   private boolean emailChanged = false;
@@ -41,6 +42,7 @@ public class UpdateUser {
   private boolean externalIdentityProviderChanged = false;
   private boolean externalIdentityProviderIdChanged = false;
   private boolean externalIdentityProviderLoginChanged = false;
+  private boolean localChanged = false;
 
   @CheckForNull
   public String login() {
@@ -161,5 +163,20 @@ public class UpdateUser {
 
   public boolean isExternalIdentityProviderLoginChanged() {
     return externalIdentityProviderLoginChanged;
+  }
+
+  @CheckForNull
+  public Boolean local() {
+    return local;
+  }
+
+  public UpdateUser setLocal(@Nullable Boolean local) {
+    this.local = local;
+    localChanged = true;
+    return this;
+  }
+
+  public boolean isLocalChanged() {
+    return localChanged;
   }
 }

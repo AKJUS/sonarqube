@@ -526,6 +526,12 @@ public class DefaultUserControllerTest {
     performPatchCallAndExpectBadRequest("{\"login\":\"\"}", "Value  for field login was rejected. Error: size must be between 2 and 100.");
   }
 
+  @Test
+  public void updateUser_whenLocalIsProvided_shouldUpdate() throws Exception {
+    UpdateUser userUpdate = performPatchCallAndVerifyResponse("{\"local\":true}");
+    assertThat(userUpdate.local()).isTrue();
+  }
+
   private void performPatchCallAndExpectBadRequest(String payload, String expectedMessage) throws Exception {
     userSession.logIn().setSystemAdministrator();
 

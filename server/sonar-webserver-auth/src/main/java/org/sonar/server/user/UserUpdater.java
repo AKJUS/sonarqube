@@ -196,6 +196,7 @@ public class UserUpdater {
   }
 
   private boolean updateDto(DbSession dbSession, UpdateUser update, UserDto dto) {
+    checkRequestedLocalStateIsConsistent(update, dto);
     List<String> messages = newArrayList();
     boolean changed = updateLogin(dbSession, update, dto, messages);
     changed |= updateName(update, dto, messages);
@@ -205,6 +206,17 @@ public class UserUpdater {
     changed |= updateScmAccounts(dbSession, update, dto, messages);
     checkRequest(messages.isEmpty(), messages);
     return changed;
+  }
+
+  private static void checkRequestedLocalStateIsConsistent(UpdateUser update, UserDto dto) {
+    if (!update.isLocalChanged() || update.local() == null) {
+      return;
+    }
+    boolean resultingLocal = isExternalIdentityUpdateRequested(update)
+      ? ExternalIdentityLocal.fromUpdateUser(update).isEmpty()
+      : dto.isLocal();
+    checkRequest(Objects.equals(update.local(), resultingLocal),
+      "Value of 'local' (%s) does not match the resulting local status of the user (%s).", update.local(), resultingLocal);
   }
 
   private boolean updateLogin(DbSession dbSession, UpdateUser updateUser, UserDto userDto, List<String> messages) {
@@ -288,6 +300,8 @@ public class UserUpdater {
 
 
   private void setExternalIdentity(DbSession dbSession, UserDto dto, ExternalIdentityLocal externalIdentity) {
+    checkRequest(externalIdentity.isEmpty() || !dto.isLocal() || externalIdentity.provider() != null,
+      "The 'externalProvider' field is required to bind a local account to an external identity provider.");
     if (externalIdentity.isEmpty()) {
       dto.setExternalLogin(dto.getLogin());
       dto.setExternalIdentityProvider(SQ_AUTHORITY);

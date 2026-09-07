@@ -20,9 +20,13 @@
 package org.sonar.server.user;
 
 import com.google.common.collect.Multimap;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.function.Consumer;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.impl.utils.AlwaysIncreasingSystem2;
 import org.sonar.api.utils.System2;
@@ -54,6 +58,7 @@ import static org.sonar.db.user.UserTesting.newExternalUser;
 import static org.sonar.db.user.UserTesting.newLocalUser;
 import static org.sonar.db.user.UserTesting.newUserDto;
 
+@RunWith(DataProviderRunner.class)
 public class UserUpdaterUpdateIT {
 
   private static final String DEFAULT_LOGIN = "marius";
@@ -440,6 +445,133 @@ public class UserUpdaterUpdateIT {
     assertThat(dbClient.userDao().selectByLogin(session, DEFAULT_LOGIN))
       .extracting(UserDto::getExternalLogin, UserDto::getExternalIdentityProvider)
       .containsOnly("john", "bitbucket");
+  }
+
+  @Test
+  @UseDataProvider("externalIdentityFieldSetters")
+  public void fails_to_update_external_identity_of_local_user_without_external_provider(Consumer<UpdateUser> externalIdentityFieldSetter) {
+    UserDto user = db.users().insertUser(newLocalUser(DEFAULT_LOGIN, "Marius", "marius@email.com"));
+    createDefaultGroup();
+
+    UpdateUser updateUser = new UpdateUser();
+    externalIdentityFieldSetter.accept(updateUser);
+    assertThatThrownBy(() -> underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER))
+      .isInstanceOf(BadRequestException.class)
+      .hasMessage("The 'externalProvider' field is required to bind a local account to an external identity provider.");
+
+    UserDto unchangedUser = dbClient.userDao().selectByLogin(session, DEFAULT_LOGIN);
+    assertThat(unchangedUser.isLocal()).isTrue();
+    assertThat(unchangedUser.getCryptedPassword()).isEqualTo(user.getCryptedPassword());
+  }
+
+  @DataProvider
+  public static Object[][] externalIdentityFieldSetters() {
+    return new Object[][] {
+      {(Consumer<UpdateUser>) u -> u.setExternalIdentityProviderLogin("john.smith")},
+      {(Consumer<UpdateUser>) u -> u.setExternalIdentityProviderId("ABCD")}
+    };
+  }
+
+  @Test
+  public void unbinds_external_identity_and_restores_local_flag_when_external_provider_is_explicitly_cleared() {
+    UserDto user = db.users().insertUser(newExternalUser(DEFAULT_LOGIN, "Marius", "marius@email.com")
+      .setExternalId("ABCD")
+      .setExternalLogin("john.smith")
+      .setExternalIdentityProvider("github"));
+    createDefaultGroup();
+
+    UpdateUser updateUser = new UpdateUser().setExternalIdentityProvider(null);
+    underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER);
+
+    UserDto updatedUser = dbClient.userDao().selectByLogin(session, DEFAULT_LOGIN);
+    assertThat(updatedUser.isLocal()).isTrue();
+    assertThat(updatedUser.getExternalIdentityProvider()).isEqualTo("sonarqube");
+    assertThat(updatedUser.getExternalLogin()).isEqualTo(DEFAULT_LOGIN);
+    assertThat(updatedUser.getExternalId()).isEqualTo(DEFAULT_LOGIN);
+  }
+
+  @Test
+  public void fails_when_requested_local_does_not_match_resulting_local_status_after_binding() {
+    UserDto user = db.users().insertUser(newLocalUser(DEFAULT_LOGIN, "Marius", "marius@email.com"));
+    createDefaultGroup();
+
+    UpdateUser updateUser = new UpdateUser()
+      .setExternalIdentityProvider("github")
+      .setExternalIdentityProviderLogin("john.smith")
+      .setLocal(true);
+    assertThatThrownBy(() -> underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER))
+      .isInstanceOf(BadRequestException.class)
+      .hasMessage("Value of 'local' (true) does not match the resulting local status of the user (false).");
+  }
+
+  @Test
+  public void fails_when_requested_local_does_not_match_resulting_local_status_after_unbinding() {
+    UserDto user = db.users().insertUser(newExternalUser(DEFAULT_LOGIN, "Marius", "marius@email.com")
+      .setExternalId("ABCD")
+      .setExternalLogin("john.smith")
+      .setExternalIdentityProvider("github"));
+    createDefaultGroup();
+
+    UpdateUser updateUser = new UpdateUser()
+      .setExternalIdentityProvider(null)
+      .setLocal(false);
+    assertThatThrownBy(() -> underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER))
+      .isInstanceOf(BadRequestException.class)
+      .hasMessage("Value of 'local' (false) does not match the resulting local status of the user (true).");
+  }
+
+  @Test
+  public void succeeds_when_requested_local_matches_resulting_local_status() {
+    UserDto user = db.users().insertUser(newLocalUser(DEFAULT_LOGIN, "Marius", "marius@email.com"));
+    createDefaultGroup();
+
+    UpdateUser updateUser = new UpdateUser()
+      .setExternalIdentityProvider("github")
+      .setExternalIdentityProviderLogin("john.smith")
+      .setLocal(false);
+    underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER);
+
+    UserDto updatedUser = dbClient.userDao().selectByLogin(session, DEFAULT_LOGIN);
+    assertThat(updatedUser.isLocal()).isFalse();
+    assertThat(updatedUser.getExternalIdentityProvider()).isEqualTo("github");
+  }
+
+  @Test
+  public void fails_when_login_rename_is_combined_with_local_mismatch_does_not_orphan_default_assignee_property() {
+    createDefaultGroup();
+    UserDto user = db.users().insertUser(newLocalUser(DEFAULT_LOGIN, "Marius", "marius@email.com"));
+    db.properties().insertProperties(user.getLogin(), null, null, null,
+      new PropertyDto().setKey(DEFAULT_ISSUE_ASSIGNEE).setValue(user.getLogin()));
+
+    UpdateUser updateUser = new UpdateUser()
+      .setLogin("new_login")
+      .setExternalIdentityProvider("github")
+      .setExternalIdentityProviderLogin("john.smith")
+      .setLocal(true);
+    assertThatThrownBy(() -> underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER))
+      .isInstanceOf(BadRequestException.class)
+      .hasMessage("Value of 'local' (true) does not match the resulting local status of the user (false).");
+
+    assertThat(dbClient.userDao().selectByLogin(session, DEFAULT_LOGIN)).isNotNull();
+    assertThat(dbClient.userDao().selectByLogin(session, "new_login")).isNull();
+    assertThat(db.getDbClient().propertiesDao().selectByQuery(PropertyQuery.builder().setKey(DEFAULT_ISSUE_ASSIGNEE).build(), db.getSession()))
+      .extracting(PropertyDto::getValue)
+      .containsOnly(DEFAULT_LOGIN);
+  }
+
+  @Test
+  public void succeeds_when_local_is_explicitly_null_and_an_unrelated_field_is_changed() {
+    UserDto user = db.users().insertUser(newLocalUser(DEFAULT_LOGIN, "Marius", "marius@email.com"));
+    createDefaultGroup();
+
+    UpdateUser updateUser = new UpdateUser()
+      .setEmail("new@email.com")
+      .setLocal(null);
+    underTest.updateAndCommit(session, user, updateUser, EMPTY_USER_CONSUMER);
+
+    UserDto updatedUser = dbClient.userDao().selectByLogin(session, DEFAULT_LOGIN);
+    assertThat(updatedUser.getEmail()).isEqualTo("new@email.com");
+    assertThat(updatedUser.isLocal()).isTrue();
   }
 
   @Test

@@ -132,6 +132,7 @@ public class DefaultUserController implements UserController {
     updateRequest.getExternalProvider().applyIfDefined(update::setExternalIdentityProvider);
     updateRequest.getExternalLogin().applyIfDefined(update::setExternalIdentityProviderLogin);
     updateRequest.getExternalId().applyIfDefined(update::setExternalIdentityProviderId);
+    updateRequest.getLocal().applyIfDefined(update::setLocal);
     return update;
   }
 
